@@ -1,0 +1,28 @@
+server:
+  port: ${SERVER_PORT:8082}
+spring:
+  application:
+    name: incentive-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/incentive_db}
+    username: ${DB_USER:incentive}
+    password: ${DB_PASSWORD:local_incentive_only}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+partner:
+  base-url: ${PARTNER_BASE_URL:http://localhost:8081}
+  connect-timeout: ${PARTNER_CONNECT_TIMEOUT:2s}
+  read-timeout: ${PARTNER_READ_TIMEOUT:3s}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

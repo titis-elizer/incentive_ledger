@@ -1,0 +1,24 @@
+server:
+  port: ${SERVER_PORT:8081}
+spring:
+  application:
+    name: partner-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/partner_db}
+    username: ${DB_USER:partner}
+    password: ${DB_PASSWORD:local_partner_only}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never

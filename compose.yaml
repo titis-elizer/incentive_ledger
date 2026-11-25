@@ -1,0 +1,69 @@
+services:
+  partner-db:
+    image: postgres:16.11-alpine
+    environment:
+      POSTGRES_DB: partner_db
+      POSTGRES_USER: partner
+      POSTGRES_PASSWORD: ${PARTNER_DB_PASSWORD:-local_partner_only}
+    volumes:
+      - partner-data:/var/lib/postgresql/data
+    networks: [partner-data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U partner -d partner_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  incentive-db:
+    image: postgres:16.11-alpine
+    environment:
+      POSTGRES_DB: incentive_db
+      POSTGRES_USER: incentive
+      POSTGRES_PASSWORD: ${INCENTIVE_DB_PASSWORD:-local_incentive_only}
+    volumes:
+      - incentive-data:/var/lib/postgresql/data
+    networks: [incentive-data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incentive -d incentive_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  partner-service:
+    build:
+      context: .
+      dockerfile: partner-service/Dockerfile
+    environment:
+      DB_URL: jdbc:postgresql://partner-db:5432/partner_db
+      DB_USER: partner
+      DB_PASSWORD: ${PARTNER_DB_PASSWORD:-local_partner_only}
+    ports: ["127.0.0.1:8081:8081"]
+    networks: [partner-data, services]
+    depends_on:
+      partner-db:
+        condition: service_healthy
+  incentive-service:
+    build:
+      context: .
+      dockerfile: incentive-service/Dockerfile
+    environment:
+      DB_URL: jdbc:postgresql://incentive-db:5432/incentive_db
+      DB_USER: incentive
+      DB_PASSWORD: ${INCENTIVE_DB_PASSWORD:-local_incentive_only}
+      PARTNER_BASE_URL: http://partner-service:8081
+      PARTNER_CONNECT_TIMEOUT: ${PARTNER_CONNECT_TIMEOUT:-2s}
+      PARTNER_READ_TIMEOUT: ${PARTNER_READ_TIMEOUT:-3s}
+    ports: ["127.0.0.1:8082:8082"]
+    networks: [incentive-data, services]
+    depends_on:
+      incentive-db:
+        condition: service_healthy
+      partner-service:
+        condition: service_healthy
+volumes:
+  partner-data:
+  incentive-data:
+networks:
+  partner-data:
+    internal: true
+  incentive-data:
+    internal: true
+  services:
